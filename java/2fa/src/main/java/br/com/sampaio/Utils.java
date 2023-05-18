@@ -17,6 +17,11 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 
 import de.taimos.totp.TOTP;
+import de.taimos.totp.TOTPData;
+
+import com.zimbra.cs.account.DataSource;
+
+import com.zimbra.common.service.ServiceException;
 
 public class Utils {
 
@@ -120,19 +125,47 @@ public class Utils {
         }
     }
 	
-    private String generateSecretKey()
+    public String generateSecretKey()
     {
         SecureRandom random = new SecureRandom();
-        byte[] bytes = new byte[20];
+        // byte[] bytes = new byte[20];
+        byte[] bytes = new byte[10];
         random.nextBytes(bytes);
         Base32 base32 = new Base32();
         return base32.encodeToString(bytes);
     }
+	public String getNewHexData(String secretKey) {
+        Base32 base32 = new Base32();
+        byte[] bytes = base32.decode(secretKey);
+		TOTPData totpData = new TOTPData ("myissuer", "mysuser", bytes);
+		return totpData.getSecretAsHex();
+	}
 
-    private String getTOTPCode(String secretKey) {
+    public String getTOTPCode(String secretKey) {
         Base32 base32 = new Base32();
         byte[] bytes = base32.decode(secretKey);
         String hexKey = Hex.encodeHexString(bytes);
         return TOTP.getOTP(hexKey);
     }
+    public String getHexKey(String secretKey) {
+        Base32 base32 = new Base32();
+        byte[] bytes = base32.decode(secretKey);
+        String hexKey = Hex.encodeHexString(bytes);
+        return hexKey;
+    }
+
+    public String getMySecret() throws ServiceException {
+        String secret = "AfpU+hRy8xnGhb5Iv3wh5IgZkuw9ThzFYD+iekT/8dZTJ6ybB2l71c2NiJBSuVqLlkSEw4cwk75se7zkIzwVHIs=";
+        if (secret != null) {
+            String decrypted = decrypt(secret);
+            return decrypted;
+        } else {
+            return null;
+        }
+    }
+
+    private String decrypt(String encrypted) throws ServiceException {
+        return DataSource.decryptData("1e7c9d0e-0c99-4bf9-9321-c06e8b2c850d", encrypted);
+    }
+
 }
